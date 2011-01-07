@@ -1,0 +1,50 @@
+--- origsrc/PEAR-1.9.1/PEAR/Installer/Role/Ext.xml	2011-01-06 21:11:32.504772000 -0600
++++ src/PEAR-1.9.1/PEAR/Installer/Role/Ext.xml	2011-01-06 21:03:24.000000000 -0600
+@@ -6,7 +6,7 @@
+  <honorsbaseinstall>1</honorsbaseinstall>
+  <unusualbaseinstall />
+  <phpfile />
+- <executable />
++ <executable>1</executable>
+  <phpextension>1</phpextension>
+  <config_vars />
+ </role>
+\ No newline at end of file
+--- origsrc/PEAR-1.9.1/PEAR/Installer.php	2011-01-06 21:11:32.520372000 -0600
++++ src/PEAR-1.9.1/PEAR/Installer.php	2011-01-06 21:42:32.535212300 -0600
+@@ -442,10 +442,13 @@ class PEAR_Installer extends PEAR_Downlo
+             // }}}
+             // {{{ set file permissions
+             if (!OS_WINDOWS) {
+-                if ($atts['role'] == 'script') {
++                switch ($atts['role']) {
++                case 'ext':
++                case 'script':
+                     $mode = 0777 & ~(int)octdec($this->config->get('umask'));
+                     $this->log(3, "+ chmod +x $dest_file");
+-                } else {
++                    break;
++                default:
+                     $mode = 0666 & ~(int)octdec($this->config->get('umask'));
+                 }
+ 
+@@ -1587,7 +1590,7 @@ class PEAR_Installer extends PEAR_Downlo
+ 
+                 $this->log(3, "+ cp $ext[file] $copyto");
+                 $this->addFileOperation('rename', array($ext['file'], $copyto));
+-                if (!OS_WINDOWS) {
++                if (!OS_WINDOWS && PHP_OS != 'CYGWIN') {
+                     $mode = 0666 & ~(int)octdec($this->config->get('umask'));
+                     $this->addFileOperation('chmod', array($mode, $copyto));
+                     if (!@chmod($copyto, $mode)) {
+--- origsrc/PEAR-1.9.1/PEAR.php	2011-01-06 21:11:32.520372000 -0600
++++ src/PEAR-1.9.1/PEAR.php	2011-01-06 21:03:24.879121800 -0600
+@@ -712,6 +712,8 @@ class PEAR
+ 
+         if (OS_WINDOWS) {
+             $suffix = '.dll';
++        } elseif (PHP_OS == 'CYGWIN') {
++            $suffix = '.dll';
+         } elseif (PHP_OS == 'HP-UX') {
+             $suffix = '.sl';
+         } elseif (PHP_OS == 'AIX') {

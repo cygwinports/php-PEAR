@@ -1,0 +1,4 @@
+PHP_CHANNEL=pear
+inherit php
+
+PATCH_URI="1.9.1-cygwin.patch"
