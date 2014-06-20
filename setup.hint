@@ -1,7 +1,0 @@
-category: PHP
-requires: php php-Archive_Tar php-Console_Getopt php-Structures_Graph php-XML_Util
-sdesc: "PHP PEAR/PECL extension installer"
-ldesc: "PEAR is the PHP Extension and Application Repository.  The PEAR 
-Installer is this software, which contains executable files and PHP code 
-that is used to download and install PEAR code from pear.php.net and 
-other repositories."
