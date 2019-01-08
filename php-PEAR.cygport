@@ -48,8 +48,10 @@ src_install() {
 	pushd PEAR_Manpages-*
 	ln -s ../package.xml .
 	PHP_PEAR_INSTALL_DIR=${D}/usr/share/pear \
+	PHP_PEAR_METADATA_DIR=${D}/var/lib/pear \
+	PHP_PEAR_MAN_DIR=${D}/usr/share/man \
 	${D}/usr/bin/pear install \
-		--force --loose --nobuild --nodeps --offline --packagingroot=${D} \
+		--force --loose --nobuild --nodeps --offline \
 		./package.xml \
 		|| error "pear install PEAR_Manpages failed"
 	rm package.xml
