@@ -1,8 +1,7 @@
-PHP_CHANNEL=pear
 inherit php
 
 NAME="php-PEAR"
-VERSION=1.10.5
+VERSION=1.10.7
 RELEASE=1
 CATEGORY="PHP"
 SUMMARY="PHP PEAR/PECL extension installer"
@@ -10,30 +9,49 @@ DESCRIPTION="PEAR is the PHP Extension and Application Repository.  The PEAR
 Installer is this software, which contains executable files and PHP code that
 is used to download and install PEAR code from pear.php.net and other
 repositories."
-PATCH_URI="1.9.1-cygwin.patch"
+SRC_URI="
+	https://pear.php.net/install-pear-nozlib.phar
+	pear-cygwin.patch
+	http://download.pear.php.net/package/PEAR_Manpages-1.10.0.tgz
+"
+SRC_DIR=.
 
 ARCH=noarch
-REQUIRES="php-devel"
+OBSOLETES="php-Archive_Tar php-Console_Getopt php-Structures_Graph php-XML_Util"
+REQUIRES="php-devel php-zlib"
 
+src_compile() { :; }
 src_install() {
-	cd ${B}
-	php_install
+	cd ${S}
+	keepdir {/etc,/usr/share,/usr/share/doc,/var/cache,/var/lib}/pear
+	export INSTALL_ROOT=${D}
+	${PHP}  -n -dshort_open_tag=0 -dopen_basedir= -derror_reporting=1803 \
+		-dmemory_limit=-1 -ddetect_unicode=0 \
+		install-pear-nozlib.phar --force \
+		--dir /usr/share/pear \
+		--cache /var/cache/pear \
+		--config /etc/pear \
+		--bin /usr/bin \
+		--www /var/www/html \
+		--doc /usr/share/doc/pear \
+		--test /usr/share/pear/test \
+		--data /usr/share/pear/data \
+		--metadata /var/lib/pear \
+		--man /usr/share/man
 
-	dodir /etc
-	cat > ${D}/etc/pear.conf <<_EOF
-#PEAR_Config 0.9
-a:9:{\
-s:7:"bin_dir";s:8:"/usr/bin";\
-s:7:"ext_dir";s:${#PHP_EXTENSION_DIR}:"${PHP_EXTENSION_DIR}";\
-s:7:"php_dir";s:${#PHP_PEAR_DIR}:"${PHP_PEAR_DIR}";\
-s:7:"cfg_dir";s:$((${#PHP_PEAR_DIR}+4)):"${PHP_PEAR_DIR}/cfg";\
-s:8:"data_dir";s:$((${#PHP_PEAR_DIR}+5)):"${PHP_PEAR_DIR}/data";\
-s:7:"doc_dir";s:$((${#PHP_PEAR_DIR}+4)):"${PHP_PEAR_DIR}/doc";\
-s:8:"test_dir";s:$((${#PHP_PEAR_DIR}+5)):"${PHP_PEAR_DIR}/test";\
-s:7:"www_dir";s:$((${#PHP_PEAR_DIR}+4)):"${PHP_PEAR_DIR}/www";\
-s:7:"php_ini";s:12:"/etc/php.ini";\
-}
-_EOF
+	pushd ${D}/usr/share/pear
+	cygpatch ${S}/pear-cygwin.patch
+	popd
 
 	make_etc_defaults /etc/pear.conf
+
+	pushd PEAR_Manpages-*
+	ln -s ../package.xml .
+	PHP_PEAR_INSTALL_DIR=${D}/usr/share/pear \
+	${D}/usr/bin/pear install \
+		--force --loose --nobuild --nodeps --offline --packagingroot=${D} \
+		./package.xml \
+		|| error "pear install PEAR_Manpages failed"
+	rm package.xml
+	popd
 }
