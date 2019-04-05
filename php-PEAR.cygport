@@ -1,7 +1,7 @@
 inherit php
 
 NAME="php-PEAR"
-VERSION=1.10.7
+VERSION=1.10.9
 RELEASE=1
 CATEGORY="PHP"
 SUMMARY="PHP PEAR/PECL extension installer"
@@ -17,13 +17,15 @@ SRC_URI="
 SRC_DIR=.
 
 ARCH=noarch
+
 OBSOLETES="php-Archive_Tar php-Console_Getopt php-Structures_Graph php-XML_Util"
-REQUIRES="php-devel php-zlib"
+REQUIRES="php-devel php-bz2 php-zlib"
 
 src_compile() { :; }
 src_install() {
 	cd ${S}
-	keepdir {/etc,/usr/share,/usr/share/doc,/var/cache,/var/lib}/pear
+	keepdir /usr/share{,/doc}/pear
+	keepdir /etc/pear /var/{cache,lib}/pear
 	export INSTALL_ROOT=${D}
 	${PHP}  -n -dshort_open_tag=0 -dopen_basedir= -derror_reporting=1803 \
 		-dmemory_limit=-1 -ddetect_unicode=0 \
@@ -43,17 +45,18 @@ src_install() {
 	cygpatch ${S}/pear-cygwin.patch
 	popd
 
-	make_etc_defaults /etc/pear.conf
-
 	pushd PEAR_Manpages-*
 	ln -s ../package.xml .
-	PHP_PEAR_INSTALL_DIR=${D}/usr/share/pear \
 	PHP_PEAR_METADATA_DIR=${D}/var/lib/pear \
 	PHP_PEAR_MAN_DIR=${D}/usr/share/man \
+	PHP_PEAR_INSTALL_DIR=${D}/usr/share/pear \
+	PEAR_CONFIG_SYSCONFDIR=${D}/etc \
 	${D}/usr/bin/pear install \
 		--force --loose --nobuild --nodeps --offline \
 		./package.xml \
 		|| error "pear install PEAR_Manpages failed"
 	rm package.xml
 	popd
+
+	make_etc_defaults /etc/pear.conf
 }
